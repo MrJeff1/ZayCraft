@@ -37,12 +37,15 @@ local Camera = require("renderer.camera")
 local TilemapRenderer = require("renderer.tilemap_renderer")
 local Physics = require("systems.physics")
 
--- Tile registry (temporary, will move to registry.lua later)
+-- Tile registry
 local TILE_REGISTRY = {
     air = { name = "Air", color = { 0, 0, 0, 0 }, solid = false },
     grass = { name = "Grass", color = { 0.2, 0.8, 0.2 }, solid = true },
     dirt = { name = "Dirt", color = { 0.6, 0.4, 0.2 }, solid = true },
     stone = { name = "Stone", color = { 0.5, 0.5, 0.5 }, solid = true },
+    water = { name = "Water", color = { 0.2, 0.4, 0.8 }, solid = false }, -- walkable?
+    sand = { name = "Sand", color = { 0.9, 0.8, 0.5 }, solid = true },
+    forest = { name = "Forest", color = { 0.1, 0.5, 0.1 }, solid = true },
 }
 
 -- Game state
@@ -68,8 +71,15 @@ function Game:update(dt)
     -- Simple collision
     Physics.resolve(self.player, self.world, dt)
 
-    -- Update camera to follow player (pixel coordinates)
-    self.camera:follow(self.player.x * 32, self.player.y * 32, dt)
+    -- Calculate screen center in world coordinates
+    local screen_center_x = (love.graphics.getWidth() / 2) / self.camera.scale
+    local screen_center_y = (love.graphics.getHeight() / 2) / self.camera.scale
+
+    -- Target camera position so player is at screen center
+    local target_x = self.player.x * 32 - screen_center_x
+    local target_y = self.player.y * 32 - screen_center_y
+
+    self.camera:follow(target_x, target_y, dt)
 
     -- Update world loading around player
     local cx = math.floor(self.player.x / 16)
@@ -94,6 +104,18 @@ function Game:draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
     love.graphics.print("Pos: " .. math.floor(self.player.x) .. ", " .. math.floor(self.player.y), 10, 30)
+    love.graphics.print("Biome: " .. self:get_biome_at_player(), 10, 50)
+end
+
+function Game:get_biome_at_player()
+    local tile = self.world:get_tile(math.floor(self.player.x), math.floor(self.player.y))
+    local biome_names = {
+        grass = "Plains",
+        forest = "Forest",
+        sand = "Desert",
+        water = "Ocean",
+    }
+    return biome_names[tile] or "Unknown"
 end
 
 function Game:keypressed(key)

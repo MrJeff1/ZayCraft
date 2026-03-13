@@ -13,12 +13,16 @@ function Engine.new()
     self.dt_accumulator = 0
     self.fixed_timestep = 1/60
     self.max_frame_time = 0.25
+    self.warning_threshold = 0.1  -- Only warn if dt is really large
     return self
 end
 
 function Engine:update(dt)
+    -- Cap dt to prevent huge jumps after a pause or lag
     if dt > self.max_frame_time then
-        Logger.warn(("Large dt detected: %.2f, capping to %.2f"):format(dt, self.max_frame_time))
+        if dt > self.warning_threshold then
+            Logger.warn(("Large dt detected: %.2f, capping to %.2f"):format(dt, self.max_frame_time))
+        end
         dt = self.max_frame_time
     end
 
@@ -32,8 +36,9 @@ function Engine:update(dt)
         steps = steps + 1
     end
 
-    if self.dt_accumulator > self.fixed_timestep then
-        Logger.warn("Fixed update couldn't keep up, discarding " .. self.dt_accumulator)
+    -- Only warn if we're consistently falling behind
+    if self.dt_accumulator > self.fixed_timestep * 2 then
+        Logger.warn("Fixed update struggling, discarding " .. self.dt_accumulator)
         self.dt_accumulator = 0
     end
 end

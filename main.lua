@@ -89,22 +89,36 @@ end
 
 function Game:draw()
     self.camera:apply()
-
-    -- Draw chunks
+    
+    -- Get camera position and screen dimensions for culling
+    local screen_width = love.graphics.getWidth() / self.camera.scale
+    local screen_height = love.graphics.getHeight() / self.camera.scale
+    
+    -- Draw chunks with culling
     for _, chunk in pairs(self.world.chunks) do
-        self.tile_renderer:draw_chunk_simple(chunk, TILE_REGISTRY)
+        self.tile_renderer:draw_chunk_simple(chunk, TILE_REGISTRY, 
+            self.camera.x, self.camera.y, screen_width, screen_height)
     end
-
+    
     -- Draw player
     self.player:draw()
-
+    
     self.camera:reset()
-
+    
     -- HUD
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
     love.graphics.print("Pos: " .. math.floor(self.player.x) .. ", " .. math.floor(self.player.y), 10, 30)
-    love.graphics.print("Biome: " .. self:get_biome_at_player(), 10, 50)
+    love.graphics.print("Chunks: " .. self:count_loaded_chunks(), 10, 50)
+    love.graphics.print("Biome: " .. self:get_biome_at_player(), 10, 70)
+end
+
+function Game:count_loaded_chunks()
+    local count = 0
+    for _ in pairs(self.world.chunks) do
+        count = count + 1
+    end
+    return count
 end
 
 function Game:get_biome_at_player()

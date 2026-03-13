@@ -1,77 +1,109 @@
 -- systems/physics.lua
--- Collision detection and resolution for entities against solid tiles.
+-- Optimized collision detection.
 
 local Physics = {}
 
--- Check if a tile at world coordinates is solid
+-- Cache for solid tile checks
+local solid_cache = {}
+local cache_size = 0
+local MAX_CACHE = 1000
+
+-- Check if a tile at world coordinates is solid (with caching)
 local function is_solid(world, wx, wy)
-    local tile_id = world:get_tile(math.floor(wx), math.floor(wy))
-    -- We need a tile registry. For now, assume we have a global registry.
-    -- We'll pass registry as argument later.
-    -- Simplified: assume tile IDs "grass", "dirt", "stone" are solid, "air" is not.
-    if tile_id == "air" then
-        return false
-    else
-        return true
+    local tx, ty = math.floor(wx), math.floor(wy)
+    local key = tx .. "," .. ty
+    
+    -- Check cache
+    if solid_cache[key] ~= nil then
+        return solid_cache[key]
     end
+    
+    -- Get tile and determine if solid
+    local tile_id = world:get_tile(tx, ty)
+    local solid = tile_id ~= "air" and tile_id ~= "water"
+    
+    -- Cache the result
+    solid_cache[key] = solid
+    cache_size = cache_size + 1
+    
+    -- Limit cache size
+    if cache_size > MAX_CACHE then
+        -- Clear cache periodically (simplified)
+        solid_cache = {}
+        cache_size = 0
+    end
+    
+    return solid
 end
 
--- Resolve collision for an entity
+-- Resolve collision for an entity (optimized)
 function Physics.resolve(entity, world, dt)
-    -- Simple AABB collision with tile grid
-    -- We'll implement a basic sweep later; for now just prevent going into solid tiles.
+    -- Only check if moving
+    if entity.vx == 0 and entity.vy == 0 then
+        return
+    end
+    
     local new_x = entity.x + entity.vx * dt
     local new_y = entity.y + entity.vy * dt
-
-    -- Check X axis
-    entity.x = new_x
+    
+    -- X axis movement
     if entity.vx ~= 0 then
-        -- Check corners
-        local left = entity.x - entity.width / 2
-        local right = entity.x + entity.width / 2
-        local top = entity.y - entity.height / 2
-        local bottom = entity.y + entity.height / 2
-
-        -- Collect all integer tile positions that the entity overlaps
-        for y = math.floor(top), math.floor(bottom) do
-            if entity.vx > 0 then
-                -- moving right, check right edge
+        entity.x = new_x
+        local left = entity.x - entity.width/2
+        local right = entity.x + entity.width/2
+        local top = entity.y - entity.height/2
+        local bottom = entity.y + entity.height/2
+        
+        -- Only check tiles in the direction of movement
+        local start_y = math.max(math.floor(top), -1000)
+        local end_y = math.min(math.floor(bottom), 1000)
+        
+        if entity.vx > 0 then
+            -- Moving right
+            for y = start_y, end_y do
                 if is_solid(world, right, y) then
-                    entity.x = math.floor(right) - entity.width / 2
+                    entity.x = math.floor(right) - entity.width/2
                     entity.vx = 0
                     break
                 end
-            else
-                -- moving left, check left edge
+            end
+        else
+            -- Moving left
+            for y = start_y, end_y do
                 if is_solid(world, left, y) then
-                    entity.x = math.floor(left) + 1 + entity.width / 2
+                    entity.x = math.floor(left) + 1 + entity.width/2
                     entity.vx = 0
                     break
                 end
             end
         end
     end
-
-    -- Check Y axis
-    entity.y = new_y
+    
+    -- Y axis movement
     if entity.vy ~= 0 then
-        local left = entity.x - entity.width / 2
-        local right = entity.x + entity.width / 2
-        local top = entity.y - entity.height / 2
-        local bottom = entity.y + entity.height / 2
-
-        for x = math.floor(left), math.floor(right) do
-            if entity.vy > 0 then
-                -- moving down, check bottom edge
+        entity.y = new_y
+        local left = entity.x - entity.width/2
+        local right = entity.x + entity.width/2
+        local top = entity.y - entity.height/2
+        local bottom = entity.y + entity.height/2
+        
+        local start_x = math.max(math.floor(left), -1000)
+        local end_x = math.min(math.floor(right), 1000)
+        
+        if entity.vy > 0 then
+            -- Moving down
+            for x = start_x, end_x do
                 if is_solid(world, x, bottom) then
-                    entity.y = math.floor(bottom) - entity.height / 2
+                    entity.y = math.floor(bottom) - entity.height/2
                     entity.vy = 0
                     break
                 end
-            else
-                -- moving up, check top edge
+            end
+        else
+            -- Moving up
+            for x = start_x, end_x do
                 if is_solid(world, x, top) then
-                    entity.y = math.floor(top) + 1 + entity.height / 2
+                    entity.y = math.floor(top) + 1 + entity.height/2
                     entity.vy = 0
                     break
                 end

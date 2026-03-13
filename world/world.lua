@@ -11,9 +11,11 @@ World.__index = World
 function World.new(seed)
     local self = setmetatable({}, World)
     self.seed = seed or os.time()
-    self.chunks = {}       -- key = "cx,cy" -> chunk
+    self.chunks = {}  -- key = "cx,cy" -> chunk
     self.generator = Generator.new(self.seed)
-    self.load_distance = 8 -- chunks in each direction
+    self.load_distance = 6  -- Reduced from 8 to 6 (13x13 chunks = 169 chunks instead of 289)
+    self.last_center_cx = nil
+    self.last_center_cy = nil
     return self
 end
 
@@ -29,7 +31,6 @@ end
 
 -- Get tile ID at world coordinates (tile coordinates, not chunk)
 function World:get_tile(wx, wy)
-    if wx < 0 or wy < 0 then return "air" end -- handle negatives later
     local cx = math.floor(wx / 16)
     local cy = math.floor(wy / 16)
     local lx = (wx % 16) + 1
@@ -48,12 +49,34 @@ function World:set_tile(wx, wy, tile_id)
     chunk:set_tile(lx, ly, tile_id)
 end
 
--- Update chunks around a position (simple loading)
+-- Update chunks around a position (only if center changed)
 function World:update_center(cx, cy)
-    -- For now, just ensure chunks within load_distance are generated
+    -- Only update if we've moved to a new chunk center
+    if self.last_center_cx == cx and self.last_center_cy == cy then
+        return
+    end
+    
+    self.last_center_cx = cx
+    self.last_center_cy = cy
+    
+    -- Generate chunks within load_distance
     for dx = -self.load_distance, self.load_distance do
         for dy = -self.load_distance, self.load_distance do
             self:get_chunk(cx + dx, cy + dy)
+        end
+    end
+    
+    -- Optional: Unload distant chunks to save memory
+    self:unload_distant_chunks(cx, cy)
+end
+
+-- Unload chunks that are too far away
+function World:unload_distant_chunks(cx, cy)
+    local unload_distance = self.load_distance + 2
+    for key, chunk in pairs(self.chunks) do
+        local distance = math.max(math.abs(chunk.cx - cx), math.abs(chunk.cy - cy))
+        if distance > unload_distance then
+            self.chunks[key] = nil
         end
     end
 end

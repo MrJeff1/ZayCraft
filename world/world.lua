@@ -11,9 +11,9 @@ World.__index = World
 function World.new(seed)
     local self = setmetatable({}, World)
     self.seed = seed or os.time()
-    self.chunks = {}  -- key = "cx,cy" -> chunk
+    self.chunks = {}       -- key = "cx,cy" -> chunk
     self.generator = Generator.new(self.seed)
-    self.load_distance = 8  -- chunks in each direction
+    self.load_distance = 8 -- chunks in each direction
     return self
 end
 
@@ -29,7 +29,7 @@ end
 
 -- Get tile ID at world coordinates (tile coordinates, not chunk)
 function World:get_tile(wx, wy)
-    if wx < 0 or wy < 0 then return "air" end  -- handle negatives later
+    if wx < 0 or wy < 0 then return "air" end -- handle negatives later
     local cx = math.floor(wx / 16)
     local cy = math.floor(wy / 16)
     local lx = (wx % 16) + 1

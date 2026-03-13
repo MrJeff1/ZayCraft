@@ -4,7 +4,7 @@
 local StateManager = {}
 StateManager.__index = StateManager
 
-local stack = {}  -- Stack of state tables
+local stack = {} -- Stack of state tables
 
 --- Push a new state onto the stack.
 -- Calls :enter() on the new state if it exists.
@@ -15,7 +15,7 @@ function StateManager.push(state)
     end
     table.insert(stack, state)
     if state.enter then
-        state.enter()
+        state:enter()
     end
 end
 
@@ -25,7 +25,7 @@ end
 function StateManager.pop()
     local state = table.remove(stack)
     if state and state.exit then
-        state.exit()
+        state:exit()
     end
     return state
 end
@@ -49,7 +49,7 @@ end
 function StateManager.update(dt)
     local current = StateManager.current()
     if current and current.update then
-        current.update(dt)
+        current:update(dt)
     end
 end
 
@@ -57,7 +57,7 @@ end
 function StateManager.draw()
     local current = StateManager.current()
     if current and current.draw then
-        current.draw()
+        current:draw()
     end
 end
 
@@ -65,7 +65,7 @@ end
 function StateManager.keypressed(key, scancode, isrepeat)
     local current = StateManager.current()
     if current and current.keypressed then
-        return current.keypressed(key, scancode, isrepeat)
+        return current:keypressed(key, scancode, isrepeat)
     end
     return false
 end
@@ -74,7 +74,7 @@ end
 function StateManager.keyreleased(key, scancode)
     local current = StateManager.current()
     if current and current.keyreleased then
-        return current.keyreleased(key, scancode)
+        return current:keyreleased(key, scancode)
     end
     return false
 end
@@ -83,7 +83,7 @@ end
 function StateManager.mousemoved(x, y, dx, dy, istouch)
     local current = StateManager.current()
     if current and current.mousemoved then
-        return current.mousemoved(x, y, dx, dy, istouch)
+        return current:mousemoved(x, y, dx, dy, istouch)
     end
     return false
 end
@@ -92,7 +92,7 @@ end
 function StateManager.mousepressed(x, y, button, istouch, presses)
     local current = StateManager.current()
     if current and current.mousepressed then
-        return current.mousepressed(x, y, button, istouch, presses)
+        return current:mousepressed(x, y, button, istouch, presses)
     end
     return false
 end
@@ -101,7 +101,7 @@ end
 function StateManager.mousereleased(x, y, button, istouch, presses)
     local current = StateManager.current()
     if current and current.mousereleased then
-        return current.mousereleased(x, y, button, istouch, presses)
+        return current:mousereleased(x, y, button, istouch, presses)
     end
     return false
 end
@@ -110,7 +110,7 @@ end
 function StateManager.wheelmoved(x, y)
     local current = StateManager.current()
     if current and current.wheelmoved then
-        return current.wheelmoved(x, y)
+        return current:wheelmoved(x, y)
     end
     return false
 end

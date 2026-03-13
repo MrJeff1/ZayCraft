@@ -8,7 +8,7 @@ function Camera.new()
     local self = setmetatable({}, Camera)
     self.x = 0
     self.y = 0
-    self.scale = 2.0  -- zoom level (pixels per tile? we'll use 32x32 tiles)
+    self.scale = 2.0 -- zoom level (pixels per tile? we'll use 32x32 tiles)
     self.lerp = 0.1  -- smooth follow factor
     return self
 end

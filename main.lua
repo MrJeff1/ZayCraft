@@ -39,14 +39,15 @@ local Physics = require("systems.physics")
 
 -- Tile registry (temporary, will move to registry.lua later)
 local TILE_REGISTRY = {
-    air = { name = "Air", color = {0,0,0,0}, solid = false },
-    grass = { name = "Grass", color = {0.2, 0.8, 0.2}, solid = true },
-    dirt = { name = "Dirt", color = {0.6, 0.4, 0.2}, solid = true },
-    stone = { name = "Stone", color = {0.5, 0.5, 0.5}, solid = true },
+    air = { name = "Air", color = { 0, 0, 0, 0 }, solid = false },
+    grass = { name = "Grass", color = { 0.2, 0.8, 0.2 }, solid = true },
+    dirt = { name = "Dirt", color = { 0.6, 0.4, 0.2 }, solid = true },
+    stone = { name = "Stone", color = { 0.5, 0.5, 0.5 }, solid = true },
 }
 
 -- Game state
 local Game = {}
+Game.__index = Game
 
 function Game:enter()
     Logger.info("Entering game world")
@@ -63,13 +64,13 @@ end
 function Game:update(dt)
     -- Update player
     self.player:update(dt)
-    
+
     -- Simple collision
     Physics.resolve(self.player, self.world, dt)
-    
+
     -- Update camera to follow player (pixel coordinates)
     self.camera:follow(self.player.x * 32, self.player.y * 32, dt)
-    
+
     -- Update world loading around player
     local cx = math.floor(self.player.x / 16)
     local cy = math.floor(self.player.y / 16)
@@ -78,17 +79,17 @@ end
 
 function Game:draw()
     self.camera:apply()
-    
+
     -- Draw chunks
-    for key, chunk in pairs(self.world.chunks) do
+    for _, chunk in pairs(self.world.chunks) do
         self.tile_renderer:draw_chunk_simple(chunk, TILE_REGISTRY)
     end
-    
+
     -- Draw player
     self.player:draw()
-    
+
     self.camera:reset()
-    
+
     -- HUD
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
@@ -97,14 +98,19 @@ end
 
 function Game:keypressed(key)
     if key == "escape" then
-        StateManager.pop()  -- back to main menu
+        StateManager.pop() -- back to main menu
         return true
     end
     return false
 end
 
+function Game.new()
+    return setmetatable({}, Game)
+end
+
 -- Main menu state
 local MainMenu = {}
+MainMenu.__index = MainMenu
 
 function MainMenu:enter()
     Logger.info("Entered main menu")
@@ -130,9 +136,13 @@ function MainMenu:keypressed(key)
     if key == "escape" then
         love.event.quit()
     else
-        StateManager.push(Game)
+        StateManager.push(Game.new())
     end
     return true
+end
+
+function MainMenu.new()
+    return setmetatable({}, MainMenu)
 end
 
 function love.load()
@@ -144,7 +154,7 @@ function love.load()
     ZLC.engine = Engine.new()
 
     -- Push main menu
-    StateManager.push(MainMenu)
+    StateManager.push(MainMenu.new())
 end
 
 function love.update(dt)

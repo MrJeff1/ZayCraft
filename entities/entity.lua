@@ -10,7 +10,7 @@ function Entity.new(x, y)
     self.y = y or 0
     self.vx = 0
     self.vy = 0
-    self.width = 0.8  -- tile width in tiles (collision size)
+    self.width = 0.8 -- tile width in tiles (collision size)
     self.height = 0.8
     return self
 end

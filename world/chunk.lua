@@ -15,11 +15,11 @@ function Chunk.new(cx, cy)
     for y = 1, CHUNK_SIZE do
         self.tiles[y] = {}
         for x = 1, CHUNK_SIZE do
-            self.tiles[y][x] = "air"  -- default air
+            self.tiles[y][x] = "air" -- default air
         end
     end
-    self.dirty = true  -- needs mesh rebuild
-    self.sprite_batch = nil  -- will be created by renderer
+    self.dirty = true       -- needs mesh rebuild
+    self.sprite_batch = nil -- will be created by renderer
     return self
 end
 

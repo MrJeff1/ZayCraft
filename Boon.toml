@@ -1,0 +1,50 @@
+# Boon.toml
+# Boon packaging configuration for ZayCraft Legends.
+
+[project]
+authors = "Sheldi Pierre"
+description = "A Minecraft-inspired 2D top-down survival/RPG game!"
+email = "psheldig@gmail.com"
+package_name = "zaycraft"
+title = "ZayCraft Legends"
+icon = "assets/icon.ico"
+url = "http://zayfirestudios.com/zaycraft/index.html"
+uti = "com.zayfirestudios.zaycraft"
+version = "0.1.0"
+
+[build]
+targets = ["windows", "macos", "love", "all"]
+
+[windows]
+icon = "assets/icon.ico"
+output = "ZayCraftLegends.exe"
+
+[macos]
+icon = "assets/icon.icns"
+output = "ZayCraftLegends.app"
+universal = true
+
+[linux]
+icon = "assets/icon.png"
+output = "ZayCraftLegends.AppImage"
+arch = "x86_64"
+
+[files]
+include = [
+    "main.lua",
+    "conf.lua",
+    "core/**/*",
+    "assets/**/*",
+    "mods/**/*",
+    "resource_packs/**/*"
+]
+exclude = [
+    "*.git",
+    "*.tmp",
+	"Makefile",
+	"*.love",
+	"Boon.toml"
+]
+
+[love]
+version = "11.4"

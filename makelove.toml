@@ -1,0 +1,89 @@
+# ------------------------------
+# Project
+# ------------------------------
+
+name = "ZayCraftLegends"
+# version = "0.1.0"
+# author = "Zayfire Studios"
+
+love_version = "11.4"
+
+default_targets = ["win32", "win64", "appimage", "lovejs", "macos"]
+
+build_directory = "makelove-build"
+
+icon_file = "assets/icon.png"
+
+keep_game_directory = false
+
+
+# ------------------------------
+# Files included in .love
+# ------------------------------
+
+love_files = [
+    "+*", # includes everything =D
+    "+*/*.lua", # includes lua files
+    "+./core/*.lua", # includes lua files
+    "-*/.*", # excludes hidden files/folders
+    "-./makelove-build/*", # makelove boon dir
+    "-./Makefile", # Makefile (boon)
+    "-./makelove.toml", # makelove conf file
+    "-./Boon.toml", # Boon conf file
+    "-./*.sh", # run files
+    "-./*.bat", # windows run file
+	"-./tests/*" # tests
+]
+
+
+# ------------------------------
+# Extra files for distribution
+# ------------------------------
+
+[archive_files]
+
+# optional future files
+# "README.md" = "README.md"
+# "LICENSE" = "LICENSE"
+
+
+# ------------------------------
+# Windows metadata
+# ------------------------------
+
+[windows.exe_metadata]
+FileDescription = "ZayCraft Legends {version}"
+FileVersion = "{version}"
+CompanyName = "Zayfire Studios"
+ProductName = "ZayCraft Legends"
+ProductVersion = "{version}"
+OriginalFilename = "zaycraft.exe"
+
+
+# ------------------------------
+# macOS metadata
+# ------------------------------
+
+[macos.app_metadata]
+CFBundleIdentifier = "com.zayfirestudios.zaycraft"
+CFBundleName = "ZayCraft Legends"
+CFBundleShortVersionString = "{version}"
+NSHumanReadableCopyright = "Copyright Zayfire Studios"
+
+
+# ------------------------------
+# Linux metadata
+# ------------------------------
+
+[linux.desktop_file_metadata]
+Comment = "A Minecraft-inspired 2D survival RPG"
+Categories = "Game;"
+
+
+# ------------------------------
+# LoveJS settings
+# ------------------------------
+
+[lovejs]
+title = "ZayCraft Legends"
+memory = "20000000"

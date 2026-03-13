@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=ZayCraft Legends
+Comment=A Minecraft-inspired 2D survival RPG
+# change Path to the path of this directory
+Path=/home/joseph/LoveProjects/ZayCraftLegends/
+Exec=bash run.sh
+Icon=/home/joseph/LoveProjects/ZayCraftLegends/assets/icon.svg
+Terminal=false
+Type=Application
+Categories=Game;

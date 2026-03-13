@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+
+    <!-- Background block -->
+    <rect x="8" y="8" width="112" height="112" rx="12" fill="#4CAF50"/>
+
+    <!-- Dirt layer -->
+    <rect x="8" y="64" width="112" height="56" fill="#6B3F1D"/>
+
+    <!-- Pickaxe -->
+    <rect x="58" y="30" width="12" height="60" fill="#C8A36A"/>
+    <rect x="40" y="30" width="48" height="10" fill="#B0B0B0"/>
+
+    <!-- Z letters -->
+    <text x="64" y="110"
+          font-family="monospace"
+          font-size="20"
+          text-anchor="middle"
+          fill="white">
+        ZCL
+    </text>
+
+</svg>

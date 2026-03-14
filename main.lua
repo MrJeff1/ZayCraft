@@ -19,6 +19,7 @@ local EventBus = require_core("event_bus")
 local Engine = require_core("engine")
 local Registry = require_core("registry")
 local SaveManager = require_core("save_manager")
+local Settings = require_core("settings")
 
 -- Global references
 ZLC = {
@@ -27,170 +28,102 @@ ZLC = {
     events = EventBus,
     registry = Registry,
     save = SaveManager,
+    settings = nil,
     engine = nil,
+    textures = {},
+    cursor = nil,
+    item_registry = nil, -- Will be set after item system loads
 }
-
--- Load game modules
-local World = require("world.world")
-local Player = require("entities.player")
-local Camera = require("renderer.camera")
-local TilemapRenderer = require("renderer.tilemap_renderer")
-local Physics = require("systems.physics")
-
--- Tile registry
-local TILE_REGISTRY = {
-    air = { name = "Air", color = { 0, 0, 0, 0 }, solid = false },
-    grass = { name = "Grass", color = { 0.2, 0.8, 0.2 }, solid = true },
-    dirt = { name = "Dirt", color = { 0.6, 0.4, 0.2 }, solid = true },
-    stone = { name = "Stone", color = { 0.5, 0.5, 0.5 }, solid = true },
-    water = { name = "Water", color = { 0.2, 0.4, 0.8 }, solid = false }, -- walkable?
-    sand = { name = "Sand", color = { 0.9, 0.8, 0.5 }, solid = true },
-    forest = { name = "Forest", color = { 0.1, 0.5, 0.1 }, solid = true },
-}
-
--- Game state
-local Game = {}
-Game.__index = Game
-
-function Game:enter()
-    Logger.info("Entering game world")
-    self.world = World.new(os.time())
-    self.player = Player.new(0, 0)
-    self.camera = Camera.new()
-    self.tile_renderer = TilemapRenderer.new()
-end
-
-function Game:exit()
-    Logger.info("Exiting game world")
-end
-
-function Game:update(dt)
-    -- Update player
-    self.player:update(dt)
-
-    -- Simple collision
-    Physics.resolve(self.player, self.world, dt)
-
-    -- Calculate screen center in world coordinates
-    local screen_center_x = (love.graphics.getWidth() / 2) / self.camera.scale
-    local screen_center_y = (love.graphics.getHeight() / 2) / self.camera.scale
-
-    -- Target camera position so player is at screen center
-    local target_x = self.player.x * 32 - screen_center_x
-    local target_y = self.player.y * 32 - screen_center_y
-
-    self.camera:follow(target_x, target_y, dt)
-
-    -- Update world loading around player
-    local cx = math.floor(self.player.x / 16)
-    local cy = math.floor(self.player.y / 16)
-    self.world:update_center(cx, cy)
-end
-
-function Game:draw()
-    self.camera:apply()
-    
-    -- Get camera position and screen dimensions for culling
-    local screen_width = love.graphics.getWidth() / self.camera.scale
-    local screen_height = love.graphics.getHeight() / self.camera.scale
-    
-    -- Draw chunks with culling
-    for _, chunk in pairs(self.world.chunks) do
-        self.tile_renderer:draw_chunk_simple(chunk, TILE_REGISTRY, 
-            self.camera.x, self.camera.y, screen_width, screen_height)
-    end
-    
-    -- Draw player
-    self.player:draw()
-    
-    self.camera:reset()
-    
-    -- HUD
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
-    love.graphics.print("Pos: " .. math.floor(self.player.x) .. ", " .. math.floor(self.player.y), 10, 30)
-    love.graphics.print("Chunks: " .. self:count_loaded_chunks(), 10, 50)
-    love.graphics.print("Biome: " .. self:get_biome_at_player(), 10, 70)
-end
-
-function Game:count_loaded_chunks()
-    local count = 0
-    for _ in pairs(self.world.chunks) do
-        count = count + 1
-    end
-    return count
-end
-
-function Game:get_biome_at_player()
-    local tile = self.world:get_tile(math.floor(self.player.x), math.floor(self.player.y))
-    local biome_names = {
-        grass = "Plains",
-        forest = "Forest",
-        sand = "Desert",
-        water = "Ocean",
-    }
-    return biome_names[tile] or "Unknown"
-end
-
-function Game:keypressed(key)
-    if key == "escape" then
-        StateManager.pop() -- back to main menu
-        return true
-    end
-    return false
-end
-
-function Game.new()
-    return setmetatable({}, Game)
-end
-
--- Main menu state
-local MainMenu = {}
-MainMenu.__index = MainMenu
-
-function MainMenu:enter()
-    Logger.info("Entered main menu")
-end
-
-function MainMenu:exit()
-    Logger.info("Exited main menu")
-end
-
-function MainMenu:update(dt) end
-
-function MainMenu:draw()
-    love.graphics.setBackgroundColor(0.2, 0.2, 0.2)
-    love.graphics.setColor(1, 1, 1)
-    local font = love.graphics.getFont()
-    local title = "ZayCraft Legends"
-    local prompt = "Press any key to continue"
-    love.graphics.print(title, (love.graphics.getWidth() - font:getWidth(title)) / 2, 200)
-    love.graphics.print(prompt, (love.graphics.getWidth() - font:getWidth(prompt)) / 2, 300)
-end
-
-function MainMenu:keypressed(key)
-    if key == "escape" then
-        love.event.quit()
-    else
-        StateManager.push(Game.new())
-    end
-    return true
-end
-
-function MainMenu.new()
-    return setmetatable({}, MainMenu)
-end
 
 function love.load()
     Logger.info("ZayCraft Legends starting up...")
     Logger.info("Love2D version: " .. love.getVersion())
 
+    -- Load settings
+    ZLC.settings = Settings.load()
+
+    -- Set default graphics
+    love.graphics.setDefaultFilter("nearest", "nearest")
+    love.graphics.setFont(love.graphics.newFont(16))
+
+    -- Initialize core systems
     Registry.init()
     SaveManager.init()
     ZLC.engine = Engine.new()
 
+    -- Load textures
+    ZLC:load_textures()
+
+    -- Load custom cursor
+    if love.filesystem.getInfo("assets/ui/cursor.png") then
+        ZLC.cursor = love.graphics.newImage("assets/ui/cursor.png")
+    end
+
+    -- Initialize item registry (will be populated later)
+    ZLC.item_registry = require("inventory.item_registry")
+    ZLC:register_items()
+
+    -- Register tiles
+    Registry.register_tile("grass", { name = "Grass", texture = ZLC.textures.tiles.grass, solid = true })
+    Registry.register_tile("dirt", { name = "Dirt", texture = ZLC.textures.tiles.dirt, solid = true })
+    Registry.register_tile("stone", { name = "Stone", texture = ZLC.textures.tiles.stone, solid = true })
+    Registry.register_tile("water", { name = "Water", texture = ZLC.textures.tiles.water, solid = false })
+    Registry.register_tile("sand", { name = "Sand", texture = ZLC.textures.tiles.sand, solid = true })
+    Registry.register_tile("forest", { name = "Forest", texture = ZLC.textures.tiles.forest, solid = true })
+    Registry.register_tile("mountain", { name = "Mountain", texture = ZLC.textures.tiles.mountain, solid = true })
+
     -- Push main menu
+    local MainMenu = require("states.main_menu")
     StateManager.push(MainMenu.new())
+
+    -- Hide mouse cursor
+    love.mouse.setVisible(false)
+    Logger.info("Custom Mouse Cursor Set")
+end
+
+function ZLC:load_textures()
+    self.textures = { tiles = {}, mobs = {} }
+    local tile_files = { "grass", "dirt", "stone", "water", "sand", "forest", "mountain" }
+    for _, name in ipairs(tile_files) do
+        local path = "assets/textures/tiles/" .. name .. ".png"
+        local success, tex = pcall(love.graphics.newImage, path)
+        if success then
+            self.textures.tiles[name] = tex
+            Logger.debug("Loaded texture: " .. path)
+        else
+            Logger.warn("Failed to load texture: " .. path)
+            -- fallback colored rectangle
+            local canvas = love.graphics.newCanvas(32, 32)
+            love.graphics.setCanvas(canvas)
+            love.graphics.clear(0.5, 0.5, 0.5, 1)
+            love.graphics.setCanvas()
+            self.textures.tiles[name] = canvas
+        end
+    end
+
+    local mob_files = { "zombie", "skeleton", "creeper", "spider", "player" }
+    for _, name in ipairs(mob_files) do
+        local path = "assets/textures/mobs/" .. name .. ".png"
+        local success, tex = pcall(love.graphics.newImage, path)
+        if success then
+            self.textures.mobs[name] = tex
+            Logger.debug("Loaded texture: " .. path)
+        else
+            Logger.warn("Failed to load texture: " .. path)
+        end
+    end
+end
+
+function ZLC:register_items()
+    -- Simple items (placeholders)
+    local Item = require("inventory.item")
+    self.item_registry.register("dirt_block",
+        Item.new("dirt_block", { name = "Dirt Block", texture = self.textures.tiles.dirt, type = "block" }))
+    self.item_registry.register("stone_block",
+        Item.new("stone_block", { name = "Stone Block", texture = self.textures.tiles.stone, type = "block" }))
+    self.item_registry.register("grass_block",
+        Item.new("grass_block", { name = "Grass Block", texture = self.textures.tiles.grass, type = "block" }))
+    self.item_registry.register("wood", Item.new("wood", { name = "Wood", texture = nil, type = "material" })) -- no texture yet
 end
 
 function love.update(dt)
@@ -198,14 +131,44 @@ function love.update(dt)
 end
 
 function love.draw()
-    ZLC.engine:draw()
+    StateManager.draw()
+    -- Draw global custom cursor
+    if ZLC.cursor then
+        local mx, my = love.mouse.getPosition()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(ZLC.cursor, mx, my)
+    end
 end
 
 function love.keypressed(key, scancode, isrepeat)
     return StateManager.keypressed(key, scancode, isrepeat)
 end
 
+function love.mousepressed(x, y, button, istouch, presses)
+    local current = StateManager.current()
+    if current and current.mousepressed then
+        return current:mousepressed(x, y, button, istouch, presses)
+    end
+    return false
+end
+
+-- Mobile touch support
+function love.touchpressed(id, x, y, dx, dy, pressure)
+    return love.mousepressed(x, y, 1, true, 1)
+end
+
+function love.touchreleased(id, x, y, dx, dy, pressure)
+    local current = StateManager.current()
+    if current and current.mousereleased then
+        return current:mousereleased(x, y, 1, true, 1)
+    end
+    return false
+end
+
 function love.quit()
+    if ZLC.settings then
+        ZLC.settings:save()
+    end
     if Logger then
         Logger.info("Shutting down ZayCraft Legends.")
     end

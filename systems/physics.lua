@@ -1,115 +1,74 @@
 -- systems/physics.lua
--- Optimized collision detection.
+-- Optimized collision detection
 
 local Physics = {}
 
--- Cache for solid tile checks
-local solid_cache = {}
-local cache_size = 0
-local MAX_CACHE = 1000
+-- Cache for tile lookups
+local tile_cache = {}
+local CACHE_SIZE = 0
+local MAX_CACHE = 500
 
--- Check if a tile at world coordinates is solid (with caching)
-local function is_solid(world, wx, wy)
-    local tx, ty = math.floor(wx), math.floor(wy)
-    local key = tx .. "," .. ty
-    
-    -- Check cache
-    if solid_cache[key] ~= nil then
-        return solid_cache[key]
+function Physics.resolve(entity, world, dt)
+    local original_x, original_y = entity.x, entity.y
+
+    -- Try X movement
+    local new_x = entity.x + entity.vx * dt
+    entity.x = new_x
+
+    if entity.vx ~= 0 and Physics.check_collision(entity, world) then
+        entity.x = original_x
+        entity.vx = 0
     end
-    
-    -- Get tile and determine if solid
-    local tile_id = world:get_tile(tx, ty)
-    local solid = tile_id ~= "air" and tile_id ~= "water"
-    
-    -- Cache the result
-    solid_cache[key] = solid
-    cache_size = cache_size + 1
-    
-    -- Limit cache size
-    if cache_size > MAX_CACHE then
-        -- Clear cache periodically (simplified)
-        solid_cache = {}
-        cache_size = 0
+
+    -- Try Y movement
+    local new_y = entity.y + entity.vy * dt
+    entity.y = new_y
+
+    if entity.vy ~= 0 and Physics.check_collision(entity, world) then
+        entity.y = original_y
+        entity.vy = 0
     end
-    
-    return solid
 end
 
--- Resolve collision for an entity (optimized)
-function Physics.resolve(entity, world, dt)
-    -- Only check if moving
-    if entity.vx == 0 and entity.vy == 0 then
-        return
-    end
-    
-    local new_x = entity.x + entity.vx * dt
-    local new_y = entity.y + entity.vy * dt
-    
-    -- X axis movement
-    if entity.vx ~= 0 then
-        entity.x = new_x
-        local left = entity.x - entity.width/2
-        local right = entity.x + entity.width/2
-        local top = entity.y - entity.height/2
-        local bottom = entity.y + entity.height/2
-        
-        -- Only check tiles in the direction of movement
-        local start_y = math.max(math.floor(top), -1000)
-        local end_y = math.min(math.floor(bottom), 1000)
-        
-        if entity.vx > 0 then
-            -- Moving right
-            for y = start_y, end_y do
-                if is_solid(world, right, y) then
-                    entity.x = math.floor(right) - entity.width/2
-                    entity.vx = 0
-                    break
+function Physics.check_collision(entity, world)
+    -- Get tile-aligned bounding box
+    local left = math.floor(entity.x - entity.width / 2)
+    local right = math.floor(entity.x + entity.width / 2)
+    local top = math.floor(entity.y - entity.height / 2)
+    local bottom = math.floor(entity.y + entity.height / 2)
+
+    -- Limit checks to reasonable bounds
+    left = math.max(left, -1000)
+    right = math.min(right, 1000)
+    top = math.max(top, -1000)
+    bottom = math.min(bottom, 1000)
+
+    -- Check all tiles the entity overlaps
+    for x = left, right do
+        for y = top, bottom do
+            -- Check cache first
+            local cache_key = x .. "," .. y
+            local tile = tile_cache[cache_key]
+
+            if not tile then
+                tile = world:get_tile(x, y)
+                -- Cache the result
+                tile_cache[cache_key] = tile
+                CACHE_SIZE = CACHE_SIZE + 1
+
+                -- Clear cache if too big
+                if CACHE_SIZE > MAX_CACHE then
+                    tile_cache = {}
+                    CACHE_SIZE = 0
                 end
             end
-        else
-            -- Moving left
-            for y = start_y, end_y do
-                if is_solid(world, left, y) then
-                    entity.x = math.floor(left) + 1 + entity.width/2
-                    entity.vx = 0
-                    break
-                end
+
+            if tile and tile ~= "air" and tile ~= "water" then
+                return true
             end
         end
     end
-    
-    -- Y axis movement
-    if entity.vy ~= 0 then
-        entity.y = new_y
-        local left = entity.x - entity.width/2
-        local right = entity.x + entity.width/2
-        local top = entity.y - entity.height/2
-        local bottom = entity.y + entity.height/2
-        
-        local start_x = math.max(math.floor(left), -1000)
-        local end_x = math.min(math.floor(right), 1000)
-        
-        if entity.vy > 0 then
-            -- Moving down
-            for x = start_x, end_x do
-                if is_solid(world, x, bottom) then
-                    entity.y = math.floor(bottom) - entity.height/2
-                    entity.vy = 0
-                    break
-                end
-            end
-        else
-            -- Moving up
-            for x = start_x, end_x do
-                if is_solid(world, x, top) then
-                    entity.y = math.floor(top) + 1 + entity.height/2
-                    entity.vy = 0
-                    break
-                end
-            end
-        end
-    end
+    return false
 end
 
 return Physics

@@ -9,7 +9,8 @@ function love.conf(t)
     t.window.resizable = true
     t.window.minwidth = 800
     t.window.minheight = 600
-    t.window.vsync = 1
+    t.window.icon = "assets/icon.png"
+    -- t.window.vsync = 1
     t.window.msaa = 0
     t.modules.audio = true
     t.modules.event = true

@@ -3,7 +3,7 @@
 # ------------------------------
 
 name = "ZayCraftLegends"
-# version = "0.1.0"
+# version = "0.3.0"
 # author = "Zayfire Studios"
 
 love_version = "11.4"
@@ -32,7 +32,7 @@ love_files = [
     "-./Boon.toml", # Boon conf file
     "-./*.sh", # run files
     "-./*.bat", # windows run file
-	"-./tests/*" # tests
+	"-./tests/*", "-./tools/*" # tests/tools
 ]
 
 
@@ -52,11 +52,11 @@ love_files = [
 # ------------------------------
 
 [windows.exe_metadata]
-FileDescription = "ZayCraft Legends {version}"
-FileVersion = "{version}"
+FileDescription = "ZayCraft Legends 0.3.0"
+FileVersion = "0.3.0"
 CompanyName = "Zayfire Studios"
 ProductName = "ZayCraft Legends"
-ProductVersion = "{version}"
+ProductVersion = "0.3.0"
 OriginalFilename = "zaycraft.exe"
 
 
@@ -67,7 +67,7 @@ OriginalFilename = "zaycraft.exe"
 [macos.app_metadata]
 CFBundleIdentifier = "com.zayfirestudios.zaycraft"
 CFBundleName = "ZayCraft Legends"
-CFBundleShortVersionString = "{version}"
+CFBundleShortVersionString = "0.3.0"
 NSHumanReadableCopyright = "Copyright Zayfire Studios"
 
 

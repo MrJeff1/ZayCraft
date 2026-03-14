@@ -67,8 +67,8 @@ _(Add screenshots here)_
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/zaycraft-legends.git
-cd zaycraft-legends
+git clone https://github.com/MrJeff1/ZayCraft.git
+cd ZayCraft
 
 # Install Love2D (if not already installed)
 # Ubuntu/Debian:
@@ -88,11 +88,14 @@ love .
 
 ### From Pre-built Packages
 
-Download the latest release for your platform from the [Releases](https://github.com/yourusername/zaycraft-legends/releases) page.
+Download the latest release for your platform from the [Releases](https://github.com/MrJeff1/ZayCraft/releases) page.
 
-- **Windows**: `ZayCraftLegends.exe`
-- **macOS**: `ZayCraftLegends.app`
+- **Windows**: `ZayCraftLegends-win32.zip`/`ZayCraftLegends-win64.zip`
+- **macOS**: `ZayCraftLegends-macos.zip`
 - **Linux**: `ZayCraftLegends.AppImage`
+- **Web**: `ZayCraftLegends-lovejs.zip`
+- **All**: `ZayCraftLegends.love`
+  > NOTE: Love2D is required on your system to run `ZayCraftLegends.love`
 
 ---
 

@@ -132,12 +132,6 @@ ZayCraftLegends/
 2. Test with `love .`
 3. Package using [makelove](https://github.com/pfirsich/makelove) (config provided in `makelove.toml`).
 
-### Generating Textures
-
-```bash
-python3 tools/generate_textures.py
-```
-
 ---
 
 ## 📜 License

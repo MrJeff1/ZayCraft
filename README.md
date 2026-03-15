@@ -95,7 +95,8 @@ Download the latest release for your platform from the [Releases](https://github
 - **Linux**: `ZayCraftLegends.AppImage`
 - **Web**: `ZayCraftLegends-lovejs.zip`
 - **All**: `ZayCraftLegends.love`
-  > NOTE: Love2D is required on your system to run `ZayCraftLegends.love`
+
+> NOTE: Love2D is required on your system to run `ZayCraftLegends.love`
 
 ---
 
@@ -117,7 +118,6 @@ ZayCraftLegends/
 ├── ui/                    # Inventory screen
 ├── world/                 # World generation, chunks, tiles
 ├── assets/                # Textures, icons, cursor
-├── tools/                 # Texture generation script
 └── worlds/                # Saved worlds
 ```
 
